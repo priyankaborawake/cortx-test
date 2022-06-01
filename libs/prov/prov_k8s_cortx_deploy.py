@@ -2019,7 +2019,7 @@ class ProvDeployK8sCortxLib:
                     ha_res[ha_elem]['resources'][res_type]['memory'] = \
                         cortx_resource[ha_elem][res_type]['mem']
                     ha_res[ha_elem]['resources'][res_type]['cpu'] = \
-                        cortx_resource[ha_elem][res_type]['cpu']
+                        cortx_resource['ha'][ha_elem][res_type]['cpu']
             soln.close()
         noalias_dumper = yaml.dumper.SafeDumper
         noalias_dumper.ignore_aliases = lambda self, data: True
