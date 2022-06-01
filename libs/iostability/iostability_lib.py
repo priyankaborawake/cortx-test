@@ -44,7 +44,7 @@ class IOStabilityLib:
         self.log = logging.getLogger(__name__)
         self.s3t_obj = S3TestLib(access_key=access_key, secret_key=secret_key)
         self.max_retries = max_retries
-        self.timeout = timeout
+        self.http_client_timeout  = timeout
 
     def execute_workload_distribution(self, distribution, clients, total_obj,
                                       duration_in_days, log_file_prefix, buckets_created=None):
@@ -80,7 +80,7 @@ class IOStabilityLib:
                                        end_point=S3_CFG["s3_url"],
                                        validate_certs=S3_CFG["validate_certs"],
                                        max_retries=self.max_retries,
-                                       response_header_timeout=self.timeout)
+                                       http_client_timeout=self.http_client_timeout)
                 self.log.info("Loop: %s Workload: %s objects of %s with %s parallel clients.",
                               loop, samples, size, clients)
                 self.log.info("Log Path %s", resp[1])

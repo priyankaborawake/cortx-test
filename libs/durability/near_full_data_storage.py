@@ -43,7 +43,7 @@ class NearFullStorage:
 
     def __init__(self, max_retries=None, timeout=None):
         self.max_retries = max_retries
-        self.timeout = timeout
+        self.http_client_timeout  = timeout
 
     @staticmethod
     def get_user_data_space_in_bytes(master_obj: LogicalNode, memory_percent: int) -> tuple:
@@ -128,7 +128,7 @@ class NearFullStorage:
                                        end_point=S3_CFG["s3_url"],
                                        validate_certs=S3_CFG["validate_certs"],
                                        max_retries=self.max_retries,
-                                       response_header_timeout=self.timeout
+                                       http_client_timeout=self.http_client_timeout
                                        )
                 LOGGER.info("Workload: %s objects of %s with %s parallel clients ", samples,
                             obj_size, temp_client)
@@ -170,7 +170,7 @@ class NearFullStorage:
                                    end_point=S3_CFG["s3_url"],
                                    validate_certs=S3_CFG["validate_certs"],
                                    max_retries=self.max_retries,
-                                   response_header_timeout=self.timeout
+                                   http_client_timeout=self.http_client_timeout
                                    )
             LOGGER.info("Workload: %s objects of %s with %s parallel clients ", each['num_sample'],
                         each['obj_size'], each['num_clients'])
