@@ -22,4 +22,5 @@ write_percent_per_iter: 30
 delete_percent_per_iter: 20
 
 max_retries: 5
-timeout_in_sec: 180 #httpClientTimeout 
+timeout_in_sec: 180 #httpClientTimeout #happy path
+degraded_timeout_in_sec: 500

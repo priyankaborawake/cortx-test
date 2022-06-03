@@ -69,7 +69,8 @@ class TestIOWorkloadDegradedPath:
         cls.iolib = IOStabilityLib(max_retries=cls.test_cfg['max_retries'],
                                    timeout=cls.test_cfg['timeout_in_sec'] * 1000)
         cls.near_full_storage_obj = NearFullStorage(max_retries=cls.test_cfg['max_retries'],
-                                                    timeout=cls.test_cfg['timeout_in_sec'] * 1000)
+                                                    timeout=cls.test_cfg['degraded_timeout_in_sec']
+                                                    * 1000)
         cls.duration_in_days = int(os.getenv("DURATION_OF_TEST_IN_DAYS",
                                              cls.test_cfg['happy_path_duration_days']))
 
