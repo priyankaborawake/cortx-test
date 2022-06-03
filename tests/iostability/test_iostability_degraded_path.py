@@ -177,34 +177,21 @@ class TestIOWorkloadDegradedPath:
         self.mail_notify = send_mail_notification(self.sender_mail_id, self.receiver_mail_id,
                                                   test_case_name, self.health_obj_list[0])
 
-        bucket_prefix = "testbkt-40173"
-        client = len(self.worker_node_list) * self.clients
-        percentage = self.test_cfg['nearfull_storage_percentage']
-
-        self.log.info("Step 1: Calculating byte count for required percentage")
-        resp = self.near_full_storage_obj.get_user_data_space_in_bytes(
-            master_obj=self.master_node_list[0],
-            memory_percent=percentage)
-        assert_utils.assert_true(resp[0], resp[1])
-        self.log.info("Need to add %s bytes for required percentage", resp[1])
-
-        self.log.info("Step 2: Performing writes till we reach required percentage")
-        ret = self.near_full_storage_obj.perform_near_full_sys_writes(s3userinfo=self.s3userinfo,
-                                                                      user_data_writes=int(resp[1]),
-                                                                      bucket_prefix=bucket_prefix,
-                                                                      client=client)
-        assert_utils.assert_true(ret[0], ret[1])
-        for each in ret[1]:
-            each["num_clients"] = (len(self.worker_node_list) - 1) \
-                                  * self.clients
-        self.log.debug("Write operation data: %s", ret)
-
-        self.log.info("Step 3: Shutdown the data pod safely by making replicas=0, "
-                      "check degraded status.")
-        resp = self.ha_obj.delete_kpod_with_shutdown_methods(self.master_node_list[0],
-                                                             self.health_obj_list[0])
-        assert_utils.assert_true(resp[0], "Failed in shutdown or expected cluster check")
-        self.log.info("Deleted pod : %s", list(resp[1].keys())[0])
+        workload_info = [{'bucket': 'testbkt-40173-134217728b-1654087052',
+                          'obj_name_pref': 'obj_134217728',
+                          'num_clients': 8, 'obj_size': 134217728, 'num_sample': 1824},
+                         {'bucket': 'testbkt-40173-268435456b-1654089450',
+                          'obj_name_pref': 'obj_268435456',
+                          'num_clients': 8, 'obj_size': 268435456, 'num_sample': 912},
+                         {'bucket': 'testbkt-40173-536870912b-1654091679',
+                          'obj_name_pref': 'obj_536870912',
+                          'num_clients': 8, 'obj_size': 536870912, 'num_sample': 456},
+                         {'bucket': 'testbkt-40173-1073741824b-1654093942',
+                          'obj_name_pref': 'obj_1073741824',
+                          'num_clients': 8, 'obj_size': 1073741824, 'num_sample': 228},
+                         {'bucket': 'testbkt-40173-2147483648b-1654096423',
+                          'obj_name_pref': 'obj_2147483648',
+                          'num_clients': 8, 'obj_size': 2147483648, 'num_sample': 114}]
 
         self.log.info("Step 4: Performing read operations.")
         end_time = datetime.now() + timedelta(days=self.duration_in_days)
@@ -212,9 +199,9 @@ class TestIOWorkloadDegradedPath:
         while datetime.now() < end_time:
             loop += 1
             self.log.info("%s remaining time for reading loop", (end_time - datetime.now()))
-            read_ret = self.near_full_storage_obj.perform_operations_on_pre_written_data(
+            read_ret = NearFullStorage.perform_operations_on_pre_written_data(
                 s3userinfo=self.s3userinfo,
-                workload_info=ret[1],
+                workload_info=workload_info,
                 skipread=False,
                 validate=True,
                 skipcleanup=True)
