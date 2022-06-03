@@ -199,7 +199,7 @@ class TestIOWorkloadDegradedPath:
         while datetime.now() < end_time:
             loop += 1
             self.log.info("%s remaining time for reading loop", (end_time - datetime.now()))
-            read_ret = NearFullStorage.perform_operations_on_pre_written_data(
+            read_ret = self.near_full_storage_obj.perform_operations_on_pre_written_data(
                 s3userinfo=self.s3userinfo,
                 workload_info=workload_info,
                 skipread=False,
