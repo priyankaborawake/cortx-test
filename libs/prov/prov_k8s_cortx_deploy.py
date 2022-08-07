@@ -31,9 +31,10 @@ import shutil
 import signal
 import string
 import time
+from string import Template, ascii_letters, digits
 from threading import Thread
 from typing import List
-from string import Template
+
 import requests.exceptions
 import yaml
 
@@ -41,21 +42,21 @@ from commons import commands as common_cmd
 from commons import constants as common_const
 from commons import pswdmanager
 from commons.helpers.pods_helper import LogicalNode
-from commons.params import LOG_DIR
 from commons.params import LATEST_LOG_FOLDER
+from commons.params import LOG_DIR
 from commons.params import TEST_DATA_FOLDER
-from commons.utils import system_utils
 from commons.utils import assert_utils
 from commons.utils import ext_lbconfig_utils
-from config import PROV_CFG
-from config import S3_CFG
-from config import PROV_TEST_CFG
+from commons.utils import system_utils
 from config import CMN_CFG
+from config import PROV_CFG
+from config import PROV_TEST_CFG
+from config import S3_CFG
 from libs.csm.rest.csm_rest_s3user import RestS3user
+from libs.ha.ha_common_libs_k8s import HAK8s
 from libs.prov.provisioner import Provisioner
 from libs.s3 import S3H_OBJ
 from libs.s3.s3_test_lib import S3TestLib
-from libs.ha.ha_common_libs_k8s import HAK8s
 from scripts.s3_bench import s3bench
 
 LOGGER = logging.getLogger(__name__)
@@ -112,8 +113,8 @@ class ProvDeployK8sCortxLib:
         if len(master_node_list) > 0:
             # TODO : handle multiple master node case.
             input_str = f'hostname={master_node_list[0].hostname},' \
-                f'user={master_node_list[0].username},' \
-                f'pass={master_node_list[0].password}'
+                        f'user={master_node_list[0].username},' \
+                        f'pass={master_node_list[0].password}'
             hosts_input_str.append(input_str)
         else:
             return False, "Master Node List is empty"
@@ -121,8 +122,8 @@ class ProvDeployK8sCortxLib:
         if len(worker_node_list) > 0:
             for each in worker_node_list:
                 input_str = f'hostname={each.hostname},' \
-                    f'user={each.username},' \
-                    f'pass={each.password}'
+                            f'user={each.username},' \
+                            f'pass={each.password}'
                 hosts_input_str.append(input_str)
         else:
             return False, "Worker Node List is empty"
@@ -192,7 +193,7 @@ class ProvDeployK8sCortxLib:
         LOGGER.info("No. of disks : %s", count[0])
         if int(count[0]) < self.deploy_cfg["prereq"]["min_disks"]:
             return False, f"Need at least " \
-                f"{self.deploy_cfg['prereq']['min_disks']} disks for deployment"
+                          f"{self.deploy_cfg['prereq']['min_disks']} disks for deployment"
 
         LOGGER.info("Checking OS release version")
         resp = node_obj.execute_cmd(cmd=
@@ -581,7 +582,7 @@ class ProvDeployK8sCortxLib:
         if not resource_resp:
             assert False, "Failed to update the resources for thirdparty"
         # Update resources for cortx component
-        cortx_resource_resp = self.update_res_limit_cortx(filepath)
+        cortx_resource_resp = self.update_res_limit_cortx(filepath, cvg_count)
         if not cortx_resource_resp:
             assert False, "Failed to update the resources for cortx components"
         # Update the solution yaml file with images
@@ -631,7 +632,7 @@ class ProvDeployK8sCortxLib:
             conf = yaml.safe_load(soln)
             node = conf['solution']['storage_sets'][0]['nodes']
             LOGGER.debug("Nodes details are %s", node)
-            node = [] # Empty the node list
+            node = []  # Empty the node list
             for host in worker_obj:
                 node.append(host.hostname)
             conf['solution']['storage_sets'][0]['nodes'] = node
@@ -865,8 +866,8 @@ class ProvDeployK8sCortxLib:
         jen_parameter = {}
         if len(master_node_list) > 0:
             input_str = f'hostname={master_node_list[0].hostname},' \
-                f'user={master_node_list[0].username},' \
-                f'pass={master_node_list[0].password}'
+                        f'user={master_node_list[0].username},' \
+                        f'pass={master_node_list[0].password}'
             hosts_input_str.append(input_str)
         else:
             return False, "Master Node List is empty"
@@ -874,8 +875,8 @@ class ProvDeployK8sCortxLib:
         if len(worker_node_list) > 0:
             for each in worker_node_list:
                 input_str = f'hostname={each.hostname},' \
-                    f'user={each.username},' \
-                    f'pass={each.password}'
+                            f'user={each.username},' \
+                            f'pass={each.password}'
                 hosts_input_str.append(input_str)
         hosts = "\n".join(each for each in hosts_input_str)
         jen_parameter["hosts"] = hosts
@@ -1182,7 +1183,7 @@ class ProvDeployK8sCortxLib:
             LOGGER.info("json_resp %s\n Log Path %s", resp[0], resp[1])
             assert not s3bench.check_log_file_error(resp[1]), \
                 f"S3bench workload for object size {workload} failed. " \
-                    f"Please read log file {resp[1]}"
+                f"Please read log file {resp[1]}"
             LOGGER.info("ENDED: S3 bench workload test")
 
     @staticmethod
@@ -1979,10 +1980,11 @@ class ProvDeployK8sCortxLib:
             soln.close()
         return True, filepath
 
-    def update_res_limit_cortx(self, filepath):
+    def update_res_limit_cortx(self, filepath, cvg_count):
         """
         This Method is used to update the resource limits for cortx services
         param: filepath: solution.yaml filepath
+        param: cvg_count: No of CVGs.
         returns True, filepath
         """
 
@@ -2002,20 +2004,36 @@ class ProvDeployK8sCortxLib:
             cortx_resource = self.deploy_cfg['cortx_resource']
 
             for res_type in type_list:
-                hare_hax_res[res_type]['memory'] = \
-                    cortx_resource['hax'][res_type]['mem']
-                hare_hax_res[res_type]['cpu'] = \
-                    cortx_resource['hax'][res_type]['cpu']
-                server_res[res_type]['memory'] = cortx_resource['rgw'][res_type]['mem']
-                server_res[res_type]['cpu'] = cortx_resource['rgw'][res_type]['cpu']
+                if res_type == "limits":
+                    hare_hax_res[res_type]['memory'] = self.modify_limits(
+                        cortx_resource['hax'][res_type]['mem'], cvg_count, '/')
+                    hare_hax_res[res_type]['cpu'] = self.modify_limits(
+                        cortx_resource['hax'][res_type]['cpu'], cvg_count, '/')
+                    server_res[res_type]['memory'] = self.modify_limits(
+                        cortx_resource['rgw'][res_type]['mem'], cvg_count, '/')
+                    server_res[res_type]['cpu'] = self.modify_limits(
+                        cortx_resource['rgw'][res_type]['cpu'], cvg_count, '*')
+                else:
+                    hare_hax_res[res_type]['memory'] = \
+                        cortx_resource['hax'][res_type]['mem']
+                    hare_hax_res[res_type]['cpu'] = \
+                        cortx_resource['hax'][res_type]['cpu']
+                    server_res[res_type]['memory'] = cortx_resource['rgw'][res_type]['mem']
+                    server_res[res_type]['cpu'] = cortx_resource['rgw'][res_type]['cpu']
                 control_res[res_type]['memory'] = cortx_resource['agent'][res_type]['mem']
                 control_res[res_type]['cpu'] = cortx_resource['agent'][res_type]['cpu']
                 # updating the motr /confd requests and limits resources
                 for elem in data_list:
-                    data_res[elem]['resources'][res_type]['memory'] = \
-                        cortx_resource[elem][res_type]['mem']
-                    data_res[elem]['resources'][res_type]['cpu'] = \
-                        cortx_resource[elem][res_type]['cpu']
+                    if elem == 'motr' and res_type == 'limits':
+                        data_res[elem]['resources'][res_type]['memory'] = self.modify_limits(
+                            cortx_resource[elem][res_type]['mem'], cvg_count, '/')
+                        data_res[elem]['resources'][res_type]['cpu'] = self.modify_limits(
+                            cortx_resource[elem][res_type]['cpu'], cvg_count, '*')
+                    else:
+                        data_res[elem]['resources'][res_type]['memory'] = \
+                            cortx_resource[elem][res_type]['mem']
+                        data_res[elem]['resources'][res_type]['cpu'] = \
+                            cortx_resource[elem][res_type]['cpu']
                 # updating the ha component resources
                 for ha_elem in ha_list:
                     ha_res[ha_elem]['resources'][res_type]['memory'] = \
@@ -2032,9 +2050,26 @@ class ProvDeployK8sCortxLib:
         return True, filepath
 
     @staticmethod
+    def modify_limits(value, count, operation):
+        """
+        Split the value(ex: 400Mi) and multiply/divide by count.
+        param value: resource value to be modified
+        param count: resource values to be multiplied/divided by count
+        param operation: * or /
+        return string
+        """
+        numeric_value = value.strip(ascii_letters)
+        unit = value.strip(digits)
+        if operation == '*':
+            value = int(numeric_value) * count
+        if operation == '/':
+            value = int(numeric_value) / count
+        return str(value) + unit
+
+    @staticmethod
     def get_default_access_secret_key(filepath):
         """
-        This is used to access access key and secret key
+        This is used to access key and secret key
         file: solution.yaml file
         returns access key and secrets key
         """
