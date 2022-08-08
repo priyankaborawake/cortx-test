@@ -2062,9 +2062,9 @@ class ProvDeployK8sCortxLib:
         numeric_value = value.strip(ascii_letters)
         unit = value.strip(digits)
         if operation == '*':
-            value = int(numeric_value) * count
+            value = int(numeric_value) * int(count)
         if operation == '/':
-            value = int(numeric_value) / count
+            value = int(numeric_value) / int(count)
         return str(value) + unit
 
     @staticmethod
