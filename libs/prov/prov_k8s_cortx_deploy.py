@@ -582,7 +582,7 @@ class ProvDeployK8sCortxLib:
         if not resource_resp:
             assert False, "Failed to update the resources for thirdparty"
         # Update resources for cortx component
-        cortx_resource_resp = self.update_res_limit_cortx(filepath, cvg_count)
+        cortx_resource_resp = self.update_res_limit_cortx(filepath, cvg_count, s3_instance)
         if not cortx_resource_resp:
             assert False, "Failed to update the resources for cortx components"
         # Update the solution yaml file with images
@@ -1980,11 +1980,12 @@ class ProvDeployK8sCortxLib:
             soln.close()
         return True, filepath
 
-    def update_res_limit_cortx(self, filepath, cvg_count):
+    def update_res_limit_cortx(self, filepath, cvg_count, s3_instance):
         """
         This Method is used to update the resource limits for cortx services
         param: filepath: solution.yaml filepath
         param: cvg_count: No of CVGs.
+        param: s3_instance_count: RGW instances per node
         returns True, filepath
         """
 
@@ -2010,9 +2011,9 @@ class ProvDeployK8sCortxLib:
                     hare_hax_res[res_type]['cpu'] = self.modify_limits(
                         cortx_resource['hax'][res_type]['cpu'], cvg_count, '/')
                     server_res[res_type]['memory'] = self.modify_limits(
-                        cortx_resource['rgw'][res_type]['mem'], cvg_count, '/')
+                        cortx_resource['rgw'][res_type]['mem'], s3_instance, '/')
                     server_res[res_type]['cpu'] = self.modify_limits(
-                        cortx_resource['rgw'][res_type]['cpu'], cvg_count, '*')
+                        cortx_resource['rgw'][res_type]['cpu'], s3_instance, '*')
                 else:
                     hare_hax_res[res_type]['memory'] = \
                         cortx_resource['hax'][res_type]['mem']
