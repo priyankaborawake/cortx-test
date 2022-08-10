@@ -2065,7 +2065,7 @@ class ProvDeployK8sCortxLib:
             value = int(numeric_value) * int(count)
         if operation == '/':
             value = int(numeric_value) / int(count)
-        return str(value) + unit
+        return str(int(value)) + unit
 
     @staticmethod
     def get_default_access_secret_key(filepath):
