@@ -125,6 +125,8 @@ class NearFullStorage:
                                        num_sample=samples,
                                        obj_name_pref=obj_name, obj_size=f"{obj_size}b",
                                        skip_cleanup=True, duration=None,
+                                       skip_read=True,
+                                       validate=False,
                                        log_file_prefix=f"write_workload_{obj_size}b",
                                        end_point=S3_CFG["s3_url"],
                                        validate_certs=S3_CFG["validate_certs"],
